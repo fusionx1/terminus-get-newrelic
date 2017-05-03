@@ -96,7 +96,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                       "Response time" => $sum_obj['response_time'],
                                       "Throughput" => $sum_obj['throughput'],
                                       "Error Rate" => $sum_obj['error_rate'],
-                                      "Apdex" => $sum_obj['apdex_target'] .'/' .$sum_obj['apdex_score'],
+                                      "Apdex" => $sum_obj['apdex_target'] . '/' . $sum_obj['apdex_score'],
                                       "Number of Hosts" => $sum_obj['host_count'],
                                       "Number of Instance" => $sum_obj['instance_count'],
                                       "Health" => $status);
