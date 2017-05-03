@@ -18,7 +18,7 @@ Fetches metric data from `dev`.
 ```
 terminus getNewrelic my_site.dev
 ```
-[!Sample Screenshot](https://screencast.com/t/y7Acg0wY0)](https://github.com/pantheon-systems/terminus-secrets-plugin/tree/1.x)
+[![Terminus v1.x Compatible](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/terminus-get-newrelic.png)](https://github.com/pantheon-systems/terminus)
 
 
 ## Installation
