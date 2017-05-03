@@ -1,6 +1,6 @@
 # Terminus Get Newrelic
 
-[![Terminus v1.x Compatible](https://img.shields.io/badge/terminus-v1.x-green.svg)](https://github.com/pantheon-systems/terminus-secrets-plugin/tree/1.x)
+[![Terminus v1.x Compatible](https://img.shields.io/badge/terminus-v1.x-green.svg)](https://github.com/pantheon-systems/terminus)
 
 Terminus Plugin that fetches metric data from new relic api:
 1. It will display overview of newrelic per environment
@@ -18,6 +18,7 @@ Fetches metric data from `dev`.
 ```
 terminus getNewrelic my_site.dev
 ```
+[!Sample Screenshot](https://screencast.com/t/y7Acg0wY0)](https://github.com/pantheon-systems/terminus-secrets-plugin/tree/1.x)
 
 
 ## Installation
