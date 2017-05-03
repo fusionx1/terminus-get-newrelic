@@ -10,9 +10,7 @@ Terminus Plugin that fetches metric data from new relic api:
 Learn more about Terminus and Terminus Plugins at:
 [https://pantheon.io/docs/terminus/plugins/](https://pantheon.io/docs/terminus/plugins/)
 
-## Configuration
 
-This plugin requires no configuration to use.
 
 ## Example
 
@@ -26,6 +24,5 @@ terminus getNewrelic my_site.dev
 For help installing, see [Manage Plugins](https://pantheon.io/docs/terminus/plugins/)
 ```
 mkdir -p ~/.terminus/plugins
-cd ~/.terminus/plugins
-git clone https://github.com/fusionx1/terminus-get-newrelic.git
+composer create-project -d ~/.terminus/plugins fusionx1/terminus-get-newrelic:dev-master
 ```
