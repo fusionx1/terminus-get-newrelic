@@ -1,6 +1,6 @@
 <?php
 /**
- * This command will fetch an new relic overview of metric of the project in a specific environment
+ * This command will fetch an new relic overview of the project in a specific environment
  *
  */
 namespace Pantheon\TerminusGetNewrelic\Commands;
@@ -69,30 +69,29 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
          $obj_result = json_decode($result, true);
 
 
-         $climate = new \League\CLImate\CLImate;
+         $climate = new CLImate;
 
          $items = [];
          foreach($obj_result['applications'] as $key => $val) {
 
-           $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
+             $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
 
-           $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
+             $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
 
-           $item_obj = json_decode($myresult, true);
+             $item_obj = json_decode($myresult, true);
 
-          if(strstr($item_obj['application']['name'], $env_id)) {
-            $obj = $item_obj['application'];
-            $status = $this->HealthStatus($obj['health_status']);
-            $items[] = array( "Name" => $obj['name'],
-                              "App Apdex" => $obj['settings']['app_apdex_threshold'],
-                              "Browser Apdex" => $obj['settings']['end_user_apdex_threshold'],
-                              "Health Status" => $status,
-                            );
+             if(strstr($item_obj['application']['name'], $env_id)) {
+                  $obj = $item_obj['application'];
+                  $status = $this->HealthStatus($obj['health_status']);
+                  $items[] = array( "Name" => $obj['name'],
+                                    "App Apdex" => $obj['settings']['app_apdex_threshold'],
+                                    "Browser Apdex" => $obj['settings']['end_user_apdex_threshold'],
+                                    "Health Status" => $status,
+                             );
 
-           }
+              }
 
          }
-
          $climate->table($items);
      }
 
@@ -125,11 +124,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
       curl_setopt($ch, CURLOPT_HEADER, false);
 
       $data = curl_exec($ch);
-
       curl_close($ch);;
 
       return $data;
-
     }
 
 }

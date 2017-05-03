@@ -4,8 +4,8 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#composer-lock-the-lock-file",
         "This file is @generated automatically"
     ],
-    "hash": "d52055f148cf6ccaf5e43b25c286223d",
-    "content-hash": "1161ecd1de710ce09bb69b72b0f85b8f",
+    "hash": "218381b236c283542d04542c7917c4c5",
+    "content-hash": "5be782a3d3ea017410912941b3836019",
     "packages": [
         {
             "name": "league/climate",
@@ -57,45 +57,6 @@
                 "terminal"
             ],
             "time": "2016-04-04 20:24:59"
-        },
-        {
-            "name": "phplucidframe/console-table",
-            "version": "v1.1.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/phplucidframe/console-table.git",
-                "reference": "1ba425fddab4ff5317c6ed7160c672fc5934c291"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/phplucidframe/console-table/zipball/1ba425fddab4ff5317c6ed7160c672fc5934c291",
-                "reference": "1ba425fddab4ff5317c6ed7160c672fc5934c291",
-                "shasum": ""
-            },
-            "require": {
-                "php": ">=5.3"
-            },
-            "require-dev": {
-                "phpunit/phpunit": "*"
-            },
-            "type": "library",
-            "autoload": {
-                "psr-0": {
-                    "LucidFrame\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Sithu K.",
-                    "email": "cithukyaw@gmail.com"
-                }
-            ],
-            "description": "Console Table",
-            "time": "2016-09-26 16:20:31"
         },
         {
             "name": "seld/cli-prompt",
