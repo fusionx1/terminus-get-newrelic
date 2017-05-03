@@ -14,7 +14,7 @@ Learn more about Terminus and Terminus Plugins at:
 
 This plugin requires no configuration to use.
 
-## Examples
+## Example
 
 Fetches metric data from `dev`.
 ```
@@ -27,5 +27,5 @@ For help installing, see [Manage Plugins](https://pantheon.io/docs/terminus/plug
 ```
 mkdir -p ~/.terminus/plugins
 cd ~/.terminus/plugins
-git clone https://github.com/jfussion/terminus-get-newrelic.git
+git clone https://github.com/fusionx1/terminus-get-newrelic.git
 ```
