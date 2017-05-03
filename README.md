@@ -27,3 +27,9 @@ For help installing, see [Manage Plugins](https://pantheon.io/docs/terminus/plug
 mkdir -p ~/.terminus/plugins
 composer create-project -d ~/.terminus/plugins fusionx1/terminus-get-newrelic:dev-master
 ```
+## Todo
+1. Display overview variation for 1hr, 7days, 3months in one display
+2. Iclude Appserver response time and throughput, 
+3. Add option for transactional, hooks, modules, templates metrics
+4. Include error history 
+5. Include screenshot of each metrics 
