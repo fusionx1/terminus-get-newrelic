@@ -79,15 +79,28 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
              $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
 
              $item_obj = json_decode($myresult, true);
-
              if(strstr($item_obj['application']['name'], $env_id)) {
                   $obj = $item_obj['application'];
                   $status = $this->HealthStatus($obj['health_status']);
-                  $items[] = array( "Name" => $obj['name'],
-                                    "App Apdex" => $obj['settings']['app_apdex_threshold'],
-                                    "Browser Apdex" => $obj['settings']['end_user_apdex_threshold'],
-                                    "Health Status" => $status,
-                             );
+                  $reporting = $this->HealthStatus($obj['reporting']);
+
+                  if(!$reporting){
+                    $items[] = array( "Name" => $obj['name'],
+                                      "App Apdex" => $obj['settings']['app_apdex_threshold'],
+                                      "Browser Apdex" => $obj['settings']['end_user_apdex_threshold'],
+                                      "Health Status" => $status,
+                               );
+                  } else {
+                    $sum_obj = $obj['application_summary'];
+                    $items[] = array( "Name" => $obj['name'],
+                                      "Response time" => $sum_obj['response_time'],
+                                      "Throughput" => $sum_obj['throughput'],
+                                      "Error Rate" => $sum_obj['error_rate'],
+                                      "Apdex" => $sum_obj['apdex_target'] .'/' .$sum_obj['apdex_score'],
+                                      "Number of Hosts" => $sum_obj['host_count'],
+                                      "Number of Instance" => $sum_obj['instance_count'],
+                                      "Health" => $status);
+                  }
 
               }
 
