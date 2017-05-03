@@ -1,6 +1,6 @@
 {
     "name": "fusionx1/terminus-get-newrelic",
-    "description": "Get server logs on all appservers in a specific environment.",
+    "description": "Terminus Plugin that fetches metric data from new relic api and display via console",
     "type": "terminus-plugin",
     "autoload": {
         "psr-4": { "Pantheon\\TerminusGetNewrelic\\": "src" }

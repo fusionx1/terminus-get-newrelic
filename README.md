@@ -16,7 +16,7 @@ Learn more about Terminus and Terminus Plugins at:
 
 Fetches metric data from `dev`.
 ```
-terminus getNewrelic my_site.dev
+terminus get-newrelic my_site.dev
 ```
 [![Terminus v1.x Compatible](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/terminus-get-newrelic.png)](https://github.com/pantheon-systems/terminus)
 

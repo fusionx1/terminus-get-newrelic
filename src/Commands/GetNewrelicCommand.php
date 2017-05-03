@@ -43,7 +43,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     /**
      * Pull new relic data
      *
-     * @command getNewrelic
+     * @command get-newrelic
      */
      public function getNewrelic($site_env_id, $dest = null,
          $options = ['all' => false, 'overview' => false, 'transactions' => false, 'database' => false, 'hooks' => false, 'themes_plugins' => false, 'modules' => false, 'external_services' => false,]) {
