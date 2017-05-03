@@ -1,0 +1,16 @@
+{
+    "name": "fusionx1/terminus-get-newrelic",
+    "description": "Get server logs on all appservers in a specific environment.",
+    "type": "terminus-plugin",
+    "autoload": {
+        "psr-4": { "Pantheon\\TerminusGetNewrelic\\": "src" }
+    },
+    "extra": {
+        "terminus": {
+            "compatible-version": "1.*"
+        }
+    },
+    "require": {
+        "league/climate": "^3.2"
+    }
+}
