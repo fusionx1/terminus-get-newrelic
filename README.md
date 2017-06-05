@@ -18,7 +18,7 @@ Fetches metric data from `dev`.
 ```
 terminus get-newrelic my_site.dev
 ```
-[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/terminus-get-newrelic2.png)](https://github.com/pantheon-systems/terminus)
+[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/terminus-get-newrelic4.png)](https://github.com/pantheon-systems/terminus)
 
 
 ## Installation
@@ -29,7 +29,6 @@ composer create-project -d ~/.terminus/plugins fusionx1/terminus-get-newrelic:de
 ```
 ## Todo
 1. Display overview variation for 1hr, 7days, 3months in one display
-2. Iclude Appserver response time and throughput, 
-3. Add option for transactional, hooks, modules, templates metrics
-4. Include error history 
-5. Include screenshot of each metrics 
+2. Add option for transactional, hooks, modules, templates metrics
+3. Include error history 
+4. Include screenshot of each metrics 
