@@ -46,7 +46,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
        * @command newrelic:org
        */
        public function org($org_id, $dest = null,
-         $options = ['all' => false, 'overview' => false, 'transactions' => false, 'database' => false, 'hooks' => false, 'themes_plugins' => false, 'modules' => false, 'external_services' => false ]) {
+         $options = ['overview' => false ]) {
 
          $climate = new CLImate;
          if(!empty($org_id)) {
@@ -144,7 +144,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
 
     /**
-     * Pull new relic data 8:38
+     * Pull new relic data 10:14
      *
      * @command newrelic:site
      */
@@ -197,15 +197,16 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                );
                   } else {
                     $sum_obj = $obj['application_summary'];
-                    $items[] = array( "Name" => $obj['name'],
-                                      "Response time" => $sum_obj['response_time'],
-                                      "Throughput" => $sum_obj['throughput'],
-                                      "Error Rate" => $sum_obj['error_rate'],
-                                      "Apdex" => $sum_obj['apdex_target'] . '/' . $sum_obj['apdex_score'],
-                                      "# of Hosts" => $sum_obj['host_count'],
-                                      "# of Instance" => $sum_obj['instance_count'],
-                                      "Health" => $status);
-                  }
+                    if(empty($sum_obj) {
+                        $items[] = array( "Name" => $obj['name'],
+                                          "Response time" => $sum_obj['response_time'],
+                                          "Throughput" => $sum_obj['throughput'],
+                                          "Error Rate" => $sum_obj['error_rate'],
+                                          "Apdex" => $sum_obj['apdex_target'] . '/' . $sum_obj['apdex_score'],
+                                          "# of Hosts" => $sum_obj['host_count'],
+                                          "# of Instance" => $sum_obj['instance_count'],
+                                          "Health" => $status);
+                    }
 
               }
 
@@ -216,16 +217,16 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      function HealthStatus($color) {
        switch ($color) {
          case "green":
-             return "\033[31;5m Healthy Condition\033[0m\t";
+             return "Healthy Condition";
              break;
          case "red":
-             return "\033[31;5m Critical Condition\033[0m\t";
+             return "Critical Condition";
              break;
          case "yellow":
-             return "\033[31m Warning Condition \033[0m\t";
+             return "Warning Condition";
              break;
          default:
-             return "\033[32m Not Reporting \033[0m\t";
+             return "Not Reporting";
        }
      }
 
@@ -266,15 +267,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                $status = $this->HealthStatus($obj['health_status']);
                $reporting = $this->HealthStatus($obj['reporting']);
 
-              // if($reporting != ""){
-              //   $items = array( "Name" => $obj['name'],
-              //                     "App Apdex" => $obj['settings']['app_apdex_threshold'],
-              //                     "Browser Apdex" => $obj['settings']['end_user_apdex_threshold'],
-              //                     "Health Status" => $status,
-              //              );
-              // } else {
-                 $sum_obj = $obj['application_summary'];
-                 $items = array( "Name" => $obj['name'],
+               if(!empty($obj['application_summary']) {
+                 $items[] = array( "Name" => $obj['name'],
                                    "Response time" => $sum_obj['response_time'],
                                    "Throughput" => $sum_obj['throughput'],
                                    "Error Rate" => $sum_obj['error_rate'],
@@ -282,8 +276,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                    "# of Hosts" => $sum_obj['host_count'],
                                    "# of Instance" => $sum_obj['instance_count'],
                                    "Health" => $status);
-               //}
-
+               }
            }
 
       }
