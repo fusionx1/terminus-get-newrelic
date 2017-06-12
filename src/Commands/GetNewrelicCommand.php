@@ -41,15 +41,17 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      * @option overview
      *
      */
-     public function org($org_id, $plan = null, $options = ['overview' => false ]) {
-
+     public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false ]) {
          $climate = new CLImate;
+         $progress = $climate->progress()->total(100);
+         $progress->advance();
          if(!empty($org_id)) {
              $pro = array();
              $free = array();
              $business = array();
              $elite = array();
-
+             $preloader = 'Loading.';
+             $counter = 0;
              $this->sites()->fetch(
              [
                 'org_id' => isset($org_id) ? $org_id : null,
@@ -61,43 +63,60 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 $this->log()->notice('You have no sites.');
              }
 
-              $status = [];
 
-              foreach ($sites as $site) {
+             $counter = count($sites);
+             foreach ($sites as $site) {
+                  $counter++;
                   $service_level = $site['service_level'];
                   if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
                       foreach ($environments as $environment) {
                           if ( $environment['id'] == 'dev' AND !$options['overview'] ) { // #1 start
-
+                              $progress->current($counter);
                               $site_env = $site['name'] . '.' . $environment['id'];
                               list(, $env) = $this->getSiteEnv($site_env);
                               $env_id = $env->getName();
                               $newrelic = $env->getBindings()->getByType('newrelic');
                               $nr_data = array_pop($newrelic);
-
-                                if(empty($nr_data)) {
+                              $nr_status = empty($nr_data) ? "Disabled" : "Enabled";
+                                if(empty($nr_data) OR $options['all']) {
                                     switch ($service_level) {
                                         case "free":
                                             $free[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level']
+                                                "Service level" => $site['service_level'],
+                                                "Framework"  => $site['framework'],
+                                                "Site created" => $site['created'],
+                                                "PHP version" => $site['php_version'],
+                                                "Newrelic" => $nr_status
                                             );
                                         break;
 
                                         case "pro":
                                             $pro[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level']
+                                                "Service level" => $site['service_level'],
+                                                "Framework"  => $site['framework'],
+                                                "Site created" => $site['created'],
+                                                "PHP version" => $site['php_version'],
+                                                "Newrelic" => $nr_status
                                             );
                                         break;
 
                                         case "business":
                                             $business[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level']
+                                                "Service level" => $site['service_level'],
+                                                "Framework"  => $site['framework'],
+                                                "Site created" => $site['created'],
+                                                "PHP version" => $site['php_version'],
+                                                "Newrelic" => $nr_status
                                             );
                                         break;
 
                                         case "elite":
                                             $elite[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level']
+                                                "Service level" => $site['service_level'],
+                                                "Framework"  => $site['framework'],
+                                                "Site created" => $site['created'],
+                                                "PHP version" => $site['php_version'],
+                                                "Newrelic" => $nr_status
                                             );
                                         break;
                                     }
@@ -105,18 +124,19 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                           }
                                                                                          // #1 end
                           if ( $environment['id'] == 'live' AND $options['overview']) { // #2 start
-
+                              $progress->current($counter);
                               $site_env = $site['name'] . '.' . $environment['id'];
                               list(, $env) = $this->getSiteEnv($site_env);
                               $env_id = $env->getName();
                               $newrelic = $env->getBindings()->getByType('newrelic');
                               $nr_data = array_pop($newrelic);
 
-                              if(!empty($nr_data)) {
+                              if(!empty($nr_data) OR $options['all']) {
                                   $api_key = $nr_data->get('api_key');
-                                  $items = $this->fetch_newrelic_data($api_key, $env_id);
-                                  if(!empty($items)) {
-                                      $climate->table($items);
+                                  $pop = $this->fetch_newrelic_data($api_key, $env_id);
+                                  if($pop) {
+                                     $items[] = $pop;
+
                                   }
                               }
 
@@ -124,12 +144,19 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                       }
                   }
               }
-
-              if (empty($items) AND !isset($items)) {
-                  $climate->table($free);
-                  $climate->table($pro);
-                  $climate->table($business);
-                  $climate->table($elite);
+            $progress->current(100);
+            if (empty($items) AND !isset($items)) {
+                if (!empty($free))
+                    $climate->table($free);
+                if (!empty($free))
+                    $climate->table($pro);
+                if (!empty($business))
+                    $climate->table($business);
+                if (!empty($elite))
+                    $climate->table($elite);
+             } else {
+                $items = $this->multi_sort($items);
+                $climate->table($items);
              }
       }
   }
@@ -140,10 +167,12 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      *
      * @command newrelic-data:site
      */
-     public function site($site_env_id, $dest = null,
-         $options = ['all' => false, 'overview' => false, 'transactions' => false, 'database' => false, 'hooks' => false, 'themes_plugins' => false, 'modules' => false, 'external_services' => false, 'org_sites' => null, 'plan' => false ]) {
+     public function site($site_env_id, $plan = null,
+         $options = ['all' => false, 'overview' => false]) {
 
          $climate = new CLImate;
+         $progress = $climate->progress()->total(100);
+         $progress->advance();
 
          // Get env_id and site_id.
          list($site, $env) = $this->getSiteEnv($site_env_id);
@@ -151,73 +180,36 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
          $siteInfo = $site->serialize();
          $site_id = $siteInfo['id'];
+         $newrelic = $env->getBindings()->getByType('newrelic');
+         $progress->current(50);
 
-         // Set destination to cwd if not specified.
-         if (!$dest) {
-             $dest = $siteInfo['name'] . '/' . $env_id;
+         $nr_data = array_pop($newrelic);
+
+         if(!empty($nr_data)) {
+             $api_key = $nr_data->get('api_key');
+             $pop = $this->fetch_newrelic_data($api_key, $env_id);
+             if(isset($pop)) {
+                $items[] = $pop;
+                $progress->current(100);
+                $climate->table($items);
+             }
          }
 
-         $pop = $env->getBindings()->getByType('newrelic');
-         $pip = array_pop($pop);
-         $api_key = $pip->get('api_key');
-
-
-         $url =  'https://api.newrelic.com/v2/applications.json';
-
-         $result = $this->CallAPI('GET', $url, $api_key, $data = false);
-         $obj_result = json_decode($result, true);
-
-
-         $items = [];
-         foreach($obj_result['applications'] as $key => $val) {
-
-             $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
-
-             $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
-
-             $item_obj = json_decode($myresult, true);
-             if(strstr($item_obj['application']['name'], $env_id)) {
-                  $obj = $item_obj['application'];
-                  $status = $this->HealthStatus($obj['health_status']);
-                  $reporting = $this->HealthStatus($obj['reporting']);
-
-                  if($reporting != ""){
-                    $items[] = array( "Name" => $obj['name'],
-                                      "App Apdex" => $obj['settings']['app_apdex_threshold'],
-                                      "Browser Apdex" => $obj['settings']['end_user_apdex_threshold'],
-                                      "Health Status" => $status,
-                               );
-                  } else {
-
-                    if(!empty($obj['application_summary'])) {
-                        $sum_obj = $obj['application_summary'];
-                        $items[] = array( "Name" => $obj['name'],
-                                          "Response time" => $sum_obj['response_time'],
-                                          "Throughput" => $sum_obj['throughput'],
-                                          "Error Rate" => $sum_obj['error_rate'],
-                                          "Apdex" => $sum_obj['apdex_target'] . '/' . $sum_obj['apdex_score'],
-                                          "# of Hosts" => $sum_obj['host_count'],
-                                          "# of Instance" => $sum_obj['instance_count'],
-                                          "Health" => $status);
-                    }
-                 }
-              }
-
-         }
-         $climate->table($items);
      }
 
-
-     function HealthStatus($color) {
+     /**
+      * Color Status based on New-relic
+      */
+     public function HealthStatus($color) {
          switch ($color) {
              case "green":
                  return "Healthy Condition";
                  break;
              case "red":
-                 return "Critical Condition";
+                 return "<blink><red>Critical Condition</red></blink>";
                  break;
              case "yellow":
-                 return "Warning Condition";
+                 return "<yellow>Warning Condition</yellow>";
                  break;
              case "gray":
                  return "Not Reporting";
@@ -228,7 +220,11 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
          }
      }
 
-    function CallAPI($method, $url, $api_key, $data = false) {
+     /**
+      * Object constructor
+      */
+
+    public function CallAPI($method, $url, $api_key, $data = false) {
 
         $header[] = 'X-Api-Key:' . $api_key;
         $ch = curl_init();
@@ -245,41 +241,71 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
         return $data;
     }
 
-    function fetch_newrelic_data($api_key, $env_id) {
+    public function multi_sort($items) {
+        foreach ($items as $key => $row) {
+           if(isset($row['Response Time'])) {
+               $resp[$key]  = $row['Response Time'];
+           }
+        }
+        // Sort the items with responsetime descending, throughput ascending
+        // Add $items as the last parameter, to sort by the common key
+        array_multisort($resp, SORT_DESC, $items);
+        return $items;
+    }
+
+    public function check_array_keys($obj, $status, $reporting) {
+        $arr_components = array("response_time" => "Response Time",
+                                "throughput" => "Throughput",
+                                "error_rate" => "Error Rate",
+                                "apdex_target" => "Apdex Target",
+                                "host_count" => "Number of Hosts",
+                                "instance_count" => "Number of Instance");
+
+        $items = array( "Name" => $obj['name'],
+                         "Response Time" => "--",
+                         "Throughput" => "--",
+                         "Error Rate" => "--",
+                         "Apdex Target" => "--",
+                         "Number of Hosts" => "--",
+                         "Number of Instance" => "--",
+                         "Health Status" => $status);
+
+        if((!empty($reporting) OR $reporting != 'Not Reporting') AND isset($obj['application_summary'])) {
+            $sum_obj = $obj['application_summary'];
+            foreach ($arr_components as $key => $val) {
+              if (array_key_exists($key, $sum_obj)) {
+                   $items[$val] = $sum_obj[$key];
+              }
+            }
+        }
+
+        return $items;
+    }
+
+    public function fetch_newrelic_data($api_key, $env_id) {
       $url =  'https://api.newrelic.com/v2/applications.json';
 
       $result = $this->CallAPI('GET', $url, $api_key, $data = false);
       $obj_result = json_decode($result, true);
 
+      if(isset($obj_result['applications'])) {
+          foreach($obj_result['applications'] as $key => $val) {
 
-      $items = [];
-      foreach($obj_result['applications'] as $key => $val) {
+              $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
 
-          $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
+              $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
+              $item_obj = json_decode($myresult, true);
 
-          $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
-          $item_obj = json_decode($myresult, true);
+              if(strstr($item_obj['application']['name'], $env_id)) {
+                   $obj = $item_obj['application'];
+                   $status = $this->HealthStatus($obj['health_status']);
+                   $reporting = $this->HealthStatus($obj['reporting']);
+                   return $this->check_array_keys($obj, $status, $reporting);
+              }
 
-          if(strstr($item_obj['application']['name'], $env_id)) {
-               $obj = $item_obj['application'];
-               $status = $this->HealthStatus($obj['health_status']);
-               $reporting = $this->HealthStatus($obj['reporting']);
-
-               if((!empty($reporting) OR $reporting != 'Not Reporting') AND isset($obj['application_summary'])) {
-                   $sum_obj= $obj['application_summary'];
-                   $items[] = array( "Name" => $obj['name'],
-                                     "Response time" => $sum_obj['response_time'],
-                                     "Throughput" => $sum_obj['throughput'],
-                                     "Error Rate" => $sum_obj['error_rate'],
-                                     "Apdex" => $sum_obj['apdex_target'] . '/' . $sum_obj['apdex_score'],
-                                     "# of Hosts" => $sum_obj['host_count'],
-                                     "# of Instance" => $sum_obj['instance_count'],
-                                     "Health" => $status);
-                 }
-           }
+          }
 
       }
-
-      return $items;
+      return false;
     }
 }
