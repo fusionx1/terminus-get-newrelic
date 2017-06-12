@@ -45,5 +45,8 @@ For help installing, see [Manage Plugins](https://pantheon.io/docs/terminus/plug
 mkdir -p ~/.terminus/plugins
 composer create-project -d ~/.terminus/plugins fusionx1/terminus-get-newrelic:dev-master
 ```
+## Things to remember
+1. If invoking newrelic-data:org make sure you are an administrator of an organisation, otherwise it will only display sites where you are member of. 
+
 ## Todo
 1. Include screenshot of new relic metrics 
