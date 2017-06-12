@@ -14,12 +14,29 @@ Learn more about Terminus and Terminus Plugins at:
 
 ## Example
 
-Fetches metric data from `dev`.
+1. Fetches metric data from `dev`
 ```
-terminus get-newrelic my_site.dev
+terminus newrelic-data my_site.dev
 ```
-[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/terminus-get-newrelic4.png)](https://github.com/pantheon-systems/terminus)
+[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/nr-site1.png)](https://github.com/pantheon-systems/terminus)
 
+2. Displays all sites without newrelic under an organization by siteplan order.
+```
+terminus newrelic-data:org [ORG UUID]
+```
+[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/nr-org3.png)](https://github.com/pantheon-systems/terminus)
+
+3. Displays all sites with or without newrelic under an organization by siteplan order.
+```
+terminus newrelic-data:org [ORG UUID] --all
+```
+[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/nr-org1.png)](https://github.com/pantheon-systems/terminus)
+
+4. Displays all sites with slowest response time  under an organization. It provides an indicator if a site is in normal or in critical condition based on newrelic health status.
+```
+terminus newrelic-data:org [ORG UUID] --overview
+```
+[![Screenshot](http://dev-wpmanila.pantheonsite.io/wp-content/uploads/nr-org2.png)](https://github.com/pantheon-systems/terminus)
 
 ## Installation
 For help installing, see [Manage Plugins](https://pantheon.io/docs/terminus/plugins/)
