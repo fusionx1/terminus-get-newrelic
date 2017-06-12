@@ -3,8 +3,9 @@
 [![Terminus v1.x Compatible](https://img.shields.io/badge/terminus-v1.x-green.svg)](https://github.com/pantheon-systems/terminus)
 
 Terminus Plugin that fetches metric data from new relic api:
-1. It will display overview of newrelic per environment
-2. It shows an alert if the environment is under stress using new relic color coding
+1. It displays list of sites without newrelic within an organization
+2. It displays slowest performing sites using new relic data(throughput, response time, apdex)
+3. It shows an alert if the environment is under stress using new relic color coding
  [Pantheon](https://www.pantheon.io) sites.
 
 Learn more about Terminus and Terminus Plugins at:
@@ -12,7 +13,7 @@ Learn more about Terminus and Terminus Plugins at:
 
 
 
-## Example
+## Examples
 
 1. Fetches metric data from `dev`
 ```
@@ -45,7 +46,4 @@ mkdir -p ~/.terminus/plugins
 composer create-project -d ~/.terminus/plugins fusionx1/terminus-get-newrelic:dev-master
 ```
 ## Todo
-1. Display overview variation for 1hr, 7days, 3months in one display
-2. Add option for transactional, hooks, modules, templates metrics
-3. Include error history 
-4. Include screenshot of each metrics 
+1. Include screenshot of new relic metrics 
