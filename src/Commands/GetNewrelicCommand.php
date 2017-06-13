@@ -87,60 +87,33 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                   $appserver_data = array_pop($appserver);
                                   $dash_link = empty($appserver_data) ? "--" : $dash_path . $appserver_data->get('site');
 
+                                  $data = array( "Site" => $site['name'],
+                                      "Service level" => $site['service_level'],
+                                      "Framework"  => $site['framework'],
+                                      "Site created" => $site['created'],
+                                      "PHP version" => $site['php_version'],
+                                      "Newrelic" => $nr_status,
+                                      "Dashboard URL" => $dash_link);
+
                                     switch ($service_level) {
                                         case "free":
-                                            $free[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level'],
-                                                "Framework"  => $site['framework'],
-                                                "Site created" => $site['created'],
-                                                "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status,
-                                                "Dashboard URL" => $dash_link
-                                            );
+                                            $free[] = $data;
                                         break;
 
                                         case "basic":
-                                            $basic[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level'],
-                                                "Framework"  => $site['framework'],
-                                                "Site created" => $site['created'],
-                                                "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status,
-                                                "Dashboard URL" => $dash_link
-                                            );
+                                            $basic[] = $data;
                                         break;
 
                                         case "pro":
-                                            $pro[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level'],
-                                                "Framework"  => $site['framework'],
-                                                "Site created" => $site['created'],
-                                                "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status,
-                                                "Dashboard URL" => $dash_link
-                                            );
+                                            $pro[] = $data;
                                         break;
 
                                         case "business":
-                                            $business[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level'],
-                                                "Framework"  => $site['framework'],
-                                                "Site created" => $site['created'],
-                                                "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status,
-                                                "Dashboard URL" => $dash_link
-                                            );
+                                            $business[] = $data;
                                         break;
 
                                         case "elite":
-                                            $elite[] = array( "Site" => $site['name'],
-                                                "Service level" => $site['service_level'],
-                                                "Framework"  => $site['framework'],
-                                                "Site created" => $site['created'],
-                                                "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status,
-                                                "Dashboard URL" => $dash_link
-                                            );
+                                            $elite[] = $data;
                                         break;
                                     }
                               }
