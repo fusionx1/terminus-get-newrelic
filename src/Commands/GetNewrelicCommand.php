@@ -170,7 +170,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
             if (empty($items) AND !isset($items)) {
                 if (!empty($free))
                     $climate->table($free);
-                if (!empty($free))
+                if (!empty($basic))
+                    $climate->table($basic);
+                if (!empty($pro))
                     $climate->table($pro);
                 if (!empty($business))
                     $climate->table($business);
