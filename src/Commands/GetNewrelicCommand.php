@@ -47,6 +47,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
          $progress->advance();
          if(!empty($org_id)) {
              $pro = array();
+             $basic = array();
              $free = array();
              $business = array();
              $elite = array();
@@ -78,7 +79,14 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                               $newrelic = $env->getBindings()->getByType('newrelic');
                               $nr_data = array_pop($newrelic);
                               $nr_status = empty($nr_data) ? "Disabled" : "Enabled";
+                              $dash_path = 'https://dashboard.pantheon.io/sites/';
+
                                 if(empty($nr_data) OR $options['all']) {
+
+                                  $appserver = $env->getBindings()->getByType('appserver');
+                                  $appserver_data = array_pop($appserver);
+                                  $dash_link = empty($appserver_data) ? "--" : $dash_path . $appserver_data->get('site');
+
                                     switch ($service_level) {
                                         case "free":
                                             $free[] = array( "Site" => $site['name'],
@@ -86,7 +94,19 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                                 "Framework"  => $site['framework'],
                                                 "Site created" => $site['created'],
                                                 "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status
+                                                "Newrelic" => $nr_status,
+                                                "Dashboard URL" => $dash_link
+                                            );
+                                        break;
+
+                                        case "basic":
+                                            $basic[] = array( "Site" => $site['name'],
+                                                "Service level" => $site['service_level'],
+                                                "Framework"  => $site['framework'],
+                                                "Site created" => $site['created'],
+                                                "PHP version" => $site['php_version'],
+                                                "Newrelic" => $nr_status,
+                                                "Dashboard URL" => $dash_link
                                             );
                                         break;
 
@@ -96,7 +116,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                                 "Framework"  => $site['framework'],
                                                 "Site created" => $site['created'],
                                                 "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status
+                                                "Newrelic" => $nr_status,
+                                                "Dashboard URL" => $dash_link
                                             );
                                         break;
 
@@ -106,7 +127,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                                 "Framework"  => $site['framework'],
                                                 "Site created" => $site['created'],
                                                 "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status
+                                                "Newrelic" => $nr_status,
+                                                "Dashboard URL" => $dash_link
                                             );
                                         break;
 
@@ -116,7 +138,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                                 "Framework"  => $site['framework'],
                                                 "Site created" => $site['created'],
                                                 "PHP version" => $site['php_version'],
-                                                "Newrelic" => $nr_status
+                                                "Newrelic" => $nr_status,
+                                                "Dashboard URL" => $dash_link
                                             );
                                         break;
                                     }
@@ -130,7 +153,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                               $env_id = $env->getName();
                               $newrelic = $env->getBindings()->getByType('newrelic');
                               $nr_data = array_pop($newrelic);
-
                               if(!empty($nr_data) OR $options['all']) {
                                   $api_key = $nr_data->get('api_key');
                                   $pop = $this->fetch_newrelic_data($api_key, $env_id);
