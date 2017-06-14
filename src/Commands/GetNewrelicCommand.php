@@ -43,8 +43,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      */
      public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false ]) {
          $climate = new CLImate;
-         $progress = $climate->progress()->total(100);
-         $progress->advance();
+
          if(!empty($org_id)) {
              $pro = array();
              $basic = array();
@@ -65,14 +64,17 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
              }
 
 
-             $counter = count($sites);
+             $count = count($sites);
+             $offset = $count/100;
+             $progress = $climate->progress()->total($count);
+
              foreach ($sites as $site) {
-                  $counter++;
                   $service_level = $site['service_level'];
+                  $progress->current($counter);
+                  $counter += $offset;
                   if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
                       foreach ($environments as $environment) {
                           if ( $environment['id'] == 'dev' AND !$options['overview'] ) { // #1 start
-                              $progress->current($counter);
                               $site_env = $site['name'] . '.' . $environment['id'];
                               list(, $env) = $this->getSiteEnv($site_env);
                               $env_id = $env->getName();
@@ -120,7 +122,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                           }
                                                                                          // #1 end
                           if ( $environment['id'] == 'live' AND $options['overview']) { // #2 start
-                              $progress->current($counter);
                               $site_env = $site['name'] . '.' . $environment['id'];
                               list(, $env) = $this->getSiteEnv($site_env);
                               $env_id = $env->getName();
@@ -139,7 +140,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                       }
                   }
               }
-            $progress->current(100);
+            //$progress->current($counter);
             if (empty($items) AND !isset($items)) {
                 if (!empty($free))
                     $climate->table($free);
