@@ -41,7 +41,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      * @option overview
      *
      */
-     public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false ]) {
+     public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false, 'team' => false, 'owner' => null]) {
+
+
          $climate = new CLImate;
 
          if(!empty($org_id)) {
@@ -52,26 +54,35 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
              $elite = array();
              $preloader = 'Loading.';
              $counter = 0;
+
+
+
              $this->sites()->fetch(
-             [
-                'org_id' => isset($org_id) ? $org_id : null,
-             ]
-             );
+                [
+                    'org_id' => isset($org_id) ? $org_id : null,
+                    'team_only' => isset($options['team']) ? $options['team'] : false,
+                ]
+            );
+
+            if (isset($options['owner']) && !is_null($owner = $options['owner'])) {
+                if ($owner == 'me') {
+                    $owner = $this->session()->getUser()->id;
+                }
+                $this->sites->filterByOwner($owner);
+            }
 
              $sites = $this->sites->serialize();
              if (empty($sites)) {
                 $this->log()->notice('You have no sites.');
              }
 
-
              $count = count($sites);
-             $offset = $count/100;
              $progress = $climate->progress()->total($count);
 
              foreach ($sites as $site) {
                   $service_level = $site['service_level'];
                   $progress->current($counter);
-                  $counter += $offset;
+                  $counter++;
                   if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
                       foreach ($environments as $environment) {
                           if ( $environment['id'] == 'dev' AND !$options['overview'] ) { // #1 start
@@ -140,7 +151,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                       }
                   }
               }
-            //$progress->current($counter);
+
             if (empty($items) AND !isset($items)) {
                 if (!empty($free))
                     $climate->table($free);
