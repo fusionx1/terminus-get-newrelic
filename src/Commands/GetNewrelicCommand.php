@@ -77,11 +77,11 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
              }
 
              $count = count($sites);
+             $str_format = "";
              $progress = $climate->progress()->total($count);
 
              foreach ($sites as $site) {
                   $service_level = $site['service_level'];
-                  $progress->current($counter);
                   $counter++;
                   if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
                       foreach ($environments as $environment) {
@@ -100,6 +100,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                   $appserver_data = array_pop($appserver);
                                   $dash_link = empty($appserver_data) ? "--" : $dash_path . $appserver_data->get('site');
 
+
                                   $data = array( "Site" => $site['name'],
                                       "Service level" => $site['service_level'],
                                       "Framework"  => $site['framework'],
@@ -107,6 +108,10 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                       "PHP version" => $site['php_version'],
                                       "Newrelic" => $nr_status,
                                       "Dashboard URL" => $dash_link);
+
+                                    if($nr_status == 'Disabled' && $service_level != "free") {
+                                        $str_format .= $site['name'] .",";
+                                    }
 
                                     switch ($service_level) {
                                         case "free":
@@ -150,7 +155,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                           }                                                                // #2 end
                       }
                   }
+                  $progress->current($counter);
               }
+
 
             if (empty($items) AND !isset($items)) {
                 if (!empty($free))
@@ -163,10 +170,16 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                     $climate->table($business);
                 if (!empty($elite))
                     $climate->table($elite);
+
+                echo "Sites with No New Relic: " . substr($str_format, 0, -1);
+                echo "\n";
+
              } else {
                 $items = $this->multi_sort($items);
                 $climate->table($items);
              }
+
+
       }
   }
 
