@@ -49,4 +49,6 @@ composer create-project -d ~/.terminus/plugins fusionx1/terminus-get-newrelic:de
 1. If invoking New Relic-data:org make sure you are an administrator of the organisation, otherwise it will only display sites where you are member. 
 
 ## Todo
-1. Include screenshot of New relic metrics 
+1. To include screenshot of New relic metrics 
+2. To add actual PHP Usage
+3. To add Browsers time and apdex
