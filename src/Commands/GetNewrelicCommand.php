@@ -219,6 +219,37 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
      }
 
+
+     /**
+      * Pull new-relic data info per site
+      *
+      * @command newrelic-data:info
+      */
+      public function info($site_env_id, $plan = null,
+          $options = ['all' => false, 'overview' => false]) {
+
+          // Get env_id and site_id.
+          list($site, $env) = $this->getSiteEnv($site_env_id);
+          $env_id = $env->getName();
+
+          $siteInfo = $site->serialize();
+          $site_id = $siteInfo['id'];
+          $newrelic = $env->getBindings()->getByType('newrelic');
+
+          $nr_data = array_pop($newrelic);
+
+          if(!empty($nr_data)) {
+              $api_key = $nr_data->get('api_key');
+              $nr_id = $nr_data->get('account_id');
+              $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id);
+              if(isset($pop)) {
+                 $items[] = $pop;
+                 return $items;
+              }
+          }
+          return false;
+      }
+
      /**
       * Color Status based on New-relic
       */
@@ -324,9 +355,23 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                    $reporting = $this->HealthStatus($obj['reporting']);
                    return $this->check_array_keys($obj, $status, $reporting);
               }
-
           }
+      }
+      return false;
+    }
 
+    public function fetch_newrelic_info($api_key, $nr_id, $env_id) {
+      $url =  'https://api.newrelic.com/v2/applications.json';
+
+      $result = $this->CallAPI('GET', $url, $api_key, $data = false);
+      $obj_result = json_decode($result, true);
+
+      if(isset($obj_result['applications'])) {
+          foreach($obj_result['applications'] as $key => $val) {
+              $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
+              $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
+              return json_encode(array_merge(json_decode($myresult, true), array("api_key" => $api_key, "nr_id" => $nr_id)));
+          }
       }
       return false;
     }
