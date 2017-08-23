@@ -1,6 +1,7 @@
 <?php
 /**
- * This command will fetch an new relic overview of the project in a specific environment
+ * This command will fetch an new relic overview of the project 
+ * in a specific environment
  */
 namespace Pantheon\TerminusGetNewrelic\Commands;
 
@@ -26,10 +27,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     }
 
     private $new_relic_monitoring = [
-          'overview',
-          'plan',
+        'overview',
+        'plan',
     ];
-
 
     /**
      * Pull sites new-relic data within org
@@ -38,8 +38,12 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      *
      * @option overview
      */
-    public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false, 'team' => false, 'owner' => null]) 
-    {
+    public function org($org_id, $plan = null, 
+        $options = ['overview' => false, 
+                'all' => false, 
+                'team' => false, 
+                'owner' => null]
+    ) {
         $climate = new CLImate;
         if(!empty($org_id)) {
             $pro = array();
