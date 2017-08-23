@@ -21,8 +21,7 @@
         "cbf": "phpcbf --standard=PSR2 -n src",
         "test": [
             "@install-bats",
-            "@bats",
-            "@cs"
+            "@bats"
         ]
     }
 }
