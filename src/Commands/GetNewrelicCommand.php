@@ -14,7 +14,6 @@ use Pantheon\Terminus\Site\SiteAwareTrait;
 use Symfony\Component\Filesystem\Filesystem;
 use League\CLImate\CLImate;
 
-
 class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 {
     use SiteAwareTrait;
@@ -41,125 +40,134 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      * @option overview
      *
      */
-     public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false, 'team' => false, 'owner' => null]) {
+    public function org($org_id, $plan = null, $options = ['overview' => false, 'all' => false, 'team' => false, 'owner' => null]) 
+    {
+        $climate = new CLImate;
+            if(!empty($org_id)) 
+            {
+                $pro = array();
+                $basic = array();
+                $free = array();
+                $business = array();
+                $elite = array();
+                $preloader = 'Loading.';
+                $counter = 0;
 
+                $this->sites()->fetch(
+                    [
+                        'org_id' => isset($org_id) ? $org_id : null,
+                        'team_only' => isset($options['team']) ? $options['team'] : false,
+                    ]
+                );
 
-         $climate = new CLImate;
-
-         if(!empty($org_id)) {
-             $pro = array();
-             $basic = array();
-             $free = array();
-             $business = array();
-             $elite = array();
-             $preloader = 'Loading.';
-             $counter = 0;
-
-
-
-             $this->sites()->fetch(
-                [
-                    'org_id' => isset($org_id) ? $org_id : null,
-                    'team_only' => isset($options['team']) ? $options['team'] : false,
-                ]
-            );
-
-            if (isset($options['owner']) && !is_null($owner = $options['owner'])) {
-                if ($owner == 'me') {
-                    $owner = $this->session()->getUser()->id;
+                if (isset($options['owner']) && !is_null($owner = $options['owner'])) 
+                {
+                    if ($owner == 'me') 
+                    {
+                        $owner = $this->session()->getUser()->id;
+                    }
+                    $this->sites->filterByOwner($owner);
                 }
-                $this->sites->filterByOwner($owner);
-            }
 
-             $sites = $this->sites->serialize();
-             if (empty($sites)) {
-                $this->log()->notice('You have no sites.');
-             }
+                $sites = $this->sites->serialize();
+                if (empty($sites)) 
+                {
+                    $this->log()->notice('You have no sites.');
+                }
 
-             $count = count($sites);
-             $str_format = "";
-             $progress = $climate->progress()->total($count);
+                $count = count($sites);
+                $str_format = "";
+                $progress = $climate->progress()->total($count);
 
-             foreach ($sites as $site) {
-                  $service_level = $site['service_level'];
-                  $counter++;
-                  if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
-                      foreach ($environments as $environment) {
-                          if ( $environment['id'] == 'dev' AND !$options['overview'] ) { // #1 start
-                              $site_env = $site['name'] . '.' . $environment['id'];
-                              list(, $env) = $this->getSiteEnv($site_env);
-                              $env_id = $env->getName();
-                              $newrelic = $env->getBindings()->getByType('newrelic');
-                              $nr_data = array_pop($newrelic);
-                              $nr_status = empty($nr_data) ? "Disabled" : "Enabled";
-                              $dash_path = 'https://dashboard.pantheon.io/sites/';
+                foreach ($sites as $site) 
+                {
+                    $service_level = $site['service_level'];
+                    $counter++;
+                    if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) 
+                    {
+                        foreach ($environments as $environment) 
+                        {
+                            if ( $environment['id'] == 'dev' AND !$options['overview'] ) 
+                            { // #1 start
+                                $site_env = $site['name'] . '.' . $environment['id'];
+                                list(, $env) = $this->getSiteEnv($site_env);
+                                $env_id = $env->getName();
+                                $newrelic = $env->getBindings()->getByType('newrelic');
+                                $nr_data = array_pop($newrelic);
+                                $nr_status = empty($nr_data) ? "Disabled" : "Enabled";
+                                $dash_path = 'https://dashboard.pantheon.io/sites/';
 
-                                if(empty($nr_data) OR $options['all']) {
+                                if(empty($nr_data) OR $options['all']) 
+                                {
+                                    $appserver = $env->getBindings()->getByType('appserver');
+                                    $appserver_data = array_pop($appserver);
+                                    $dash_link = empty($appserver_data) ? "--" : $dash_path . $appserver_data->get('site');
 
-                                  $appserver = $env->getBindings()->getByType('appserver');
-                                  $appserver_data = array_pop($appserver);
-                                  $dash_link = empty($appserver_data) ? "--" : $dash_path . $appserver_data->get('site');
 
+                                    $data = array( "Site" => $site['name'],
+                                        "Service level" => $site['service_level'],
+                                        "Framework"  => $site['framework'],
+                                        "Site created" => $site['created'],
+                                        "PHP version" => $site['php_version'],
+                                        "Newrelic" => $nr_status,
+                                        "Dashboard URL" => $dash_link);
 
-                                  $data = array( "Site" => $site['name'],
-                                      "Service level" => $site['service_level'],
-                                      "Framework"  => $site['framework'],
-                                      "Site created" => $site['created'],
-                                      "PHP version" => $site['php_version'],
-                                      "Newrelic" => $nr_status,
-                                      "Dashboard URL" => $dash_link);
+                                        if($nr_status == 'Disabled' && $service_level != "free") 
+                                        {
+                                            $str_format .= $site['name'] .",";
+                                        }
 
-                                    if($nr_status == 'Disabled' && $service_level != "free") {
-                                        $str_format .= $site['name'] .",";
+                                        switch ($service_level) 
+                                        {
+                                            case "free":
+                                                $free[] = $data;
+                                            break;
+
+                                            case "basic":
+                                                $basic[] = $data;
+                                            break;
+
+                                            case "pro":
+                                                $pro[] = $data;
+                                            break;
+
+                                            case "business":
+                                                $business[] = $data;
+                                            break;
+
+                                            case "elite":
+                                                $elite[] = $data;
+                                            break;
+                                        }
+                                    }
+                                }
+                                                                                            // #1 end
+                                if ( $environment['id'] == 'live' AND $options['overview']) 
+                                { // #2 start
+                                    $site_env = $site['name'] . '.' . $environment['id'];
+                                    list(, $env) = $this->getSiteEnv($site_env);
+                                    $env_id = $env->getName();
+                                    $newrelic = $env->getBindings()->getByType('newrelic');
+                                    $nr_data = array_pop($newrelic);
+                                    if(!empty($nr_data) OR $options['all']) 
+                                    {
+                                        $api_key = $nr_data->get('api_key');
+                                        $pop = $this->fetch_newrelic_data($api_key, $env_id);
+                                            if($pop) 
+                                            {
+                                                $items[] = $pop;
+                                            }
                                     }
 
-                                    switch ($service_level) {
-                                        case "free":
-                                            $free[] = $data;
-                                        break;
-
-                                        case "basic":
-                                            $basic[] = $data;
-                                        break;
-
-                                        case "pro":
-                                            $pro[] = $data;
-                                        break;
-
-                                        case "business":
-                                            $business[] = $data;
-                                        break;
-
-                                        case "elite":
-                                            $elite[] = $data;
-                                        break;
-                                    }
-                              }
-                          }
-                                                                                         // #1 end
-                          if ( $environment['id'] == 'live' AND $options['overview']) { // #2 start
-                              $site_env = $site['name'] . '.' . $environment['id'];
-                              list(, $env) = $this->getSiteEnv($site_env);
-                              $env_id = $env->getName();
-                              $newrelic = $env->getBindings()->getByType('newrelic');
-                              $nr_data = array_pop($newrelic);
-                              if(!empty($nr_data) OR $options['all']) {
-                                  $api_key = $nr_data->get('api_key');
-                                  $pop = $this->fetch_newrelic_data($api_key, $env_id);
-                                  if($pop) {
-                                     $items[] = $pop;
-
-                                  }
-                              }
-
-                          }                                                                // #2 end
-                      }
-                  }
+                                }                                                                // #2 end
+                        }
+                    }
                   $progress->current($counter);
-              }
+                }
 
 
-            if (empty($items) AND !isset($items)) {
+            if (empty($items) AND !isset($items)) 
+            {
                 if (!empty($free))
                     $climate->table($free);
                 if (!empty($basic))
@@ -174,14 +182,15 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 echo "Sites with No New Relic: " . substr($str_format, 0, -1);
                 echo "\n";
 
-             } else {
+            } else 
+            {
                 $items = $this->multi_sort($items);
                 $climate->table($items);
-             }
+            }
 
 
-      }
-  }
+        }
+    }
 
 
     /**
@@ -189,95 +198,101 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
      *
      * @command newrelic-data:site
      */
-     public function site($site_env_id, $plan = null,
-         $options = ['all' => false, 'overview' => false]) {
+    public function site($site_env_id, $plan = null,
+        $options = ['all' => false, 'overview' => false]) 
+        {
 
-         $climate = new CLImate;
-         $progress = $climate->progress()->total(100);
-         $progress->advance();
+        $climate = new CLImate;
+        $progress = $climate->progress()->total(100);
+        $progress->advance();
 
-         // Get env_id and site_id.
-         list($site, $env) = $this->getSiteEnv($site_env_id);
-         $env_id = $env->getName();
+        // Get env_id and site_id.
+        list($site, $env) = $this->getSiteEnv($site_env_id);
+        $env_id = $env->getName();
+        $siteInfo = $site->serialize();
+        $site_id = $siteInfo['id'];
+        $newrelic = $env->getBindings()->getByType('newrelic');
+        $progress->current(50);
+        $nr_data = array_pop($newrelic);
 
-         $siteInfo = $site->serialize();
-         $site_id = $siteInfo['id'];
-         $newrelic = $env->getBindings()->getByType('newrelic');
-         $progress->current(50);
-
-         $nr_data = array_pop($newrelic);
-
-         if(!empty($nr_data)) {
-             $api_key = $nr_data->get('api_key');
-             $pop = $this->fetch_newrelic_data($api_key, $env_id);
-             if(isset($pop)) {
+        if(!empty($nr_data)) 
+        {
+            $api_key = $nr_data->get('api_key');
+            $pop = $this->fetch_newrelic_data($api_key, $env_id);
+            if(isset($pop)) 
+            {
                 $items[] = $pop;
                 $progress->current(100);
                 $climate->table($items);
-             }
-         }
+            }
+        }
 
      }
 
 
-     /**
-      * Pull new-relic data info per site
-      *
-      * @command newrelic-data:info
-      */
-      public function info($site_env_id, $plan = null,
-          $options = ['all' => false, 'overview' => false]) {
+    /**
+    * Pull new-relic data info per site
+    *
+    * @command newrelic-data:info
+    */
+    public function info($site_env_id, $plan = null, 
+    $options = ['all' => false, 'overview' => false]) 
+    {
 
-          // Get env_id and site_id.
-          list($site, $env) = $this->getSiteEnv($site_env_id);
-          $env_id = $env->getName();
+        // Get env_id and site_id.
+        list($site, $env) = $this->getSiteEnv($site_env_id);
+        $env_id = $env->getName();
 
-          $siteInfo = $site->serialize();
-          $site_id = $siteInfo['id'];
-          $newrelic = $env->getBindings()->getByType('newrelic');
+        $siteInfo = $site->serialize();
+        $site_id = $siteInfo['id'];
+        $newrelic = $env->getBindings()->getByType('newrelic');
 
-          $nr_data = array_pop($newrelic);
-          if(!empty($nr_data)) {
-              $api_key = $nr_data->get('api_key');
-              $nr_id = $nr_data->get('account_id');
-              $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id);
-              if(isset($pop)) {
-                 $items[] = $pop;
-                 return $items;
-              }
-          }
-          return false;
-      }
+        $nr_data = array_pop($newrelic);
+        if(!empty($nr_data)) 
+        {
+            $api_key = $nr_data->get('api_key');
+            $nr_id = $nr_data->get('account_id');
+            $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id);
+            if(isset($pop)) 
+            {
+                $items[] = $pop;
+                return $items;
+            }
+        }
+        return false;
+    }
 
-     /**
-      * Color Status based on New-relic
-      */
-     public function HealthStatus($color) {
-         switch ($color) {
-             case "green":
-                 return "Healthy Condition";
-                 break;
-             case "red":
-                 return "<blink><red>Critical Condition</red></blink>";
-                 break;
-             case "yellow":
-                 return "<yellow>Warning Condition</yellow>";
-                 break;
-             case "gray":
-                 return "Not Reporting";
-                 break;
-             default:
-                 return "Unknown";
-                 break;
-         }
-     }
+    /**
+    * Color Status based on New-relic
+    */
+    public function HealthStatus($color) 
+    {
+        switch ($color) 
+        {
+            case "green":
+                return "Healthy Condition";
+                break;
+            case "red":
+                return "<blink><red>Critical Condition</red></blink>";
+                break;
+            case "yellow":
+                return "<yellow>Warning Condition</yellow>";
+                break;
+            case "gray":
+                return "Not Reporting";
+                break;
+            default:
+                return "Unknown";
+                break;
+        }
+    }
 
      /**
       * Object constructor
       */
 
-    public function CallAPI($method, $url, $api_key, $data = false) {
-
+    public function CallAPI($method, $url, $api_key, $data = false) 
+    {
         $header[] = 'X-Api-Key:' . $api_key;
         $ch = curl_init();
 
@@ -293,11 +308,14 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
         return $data;
     }
 
-    public function multi_sort($items) {
-        foreach ($items as $key => $row) {
-           if(isset($row['Response Time'])) {
-               $resp[$key]  = $row['Response Time'];
-           }
+    public function multi_sort($items) 
+    {
+        foreach ($items as $key => $row) 
+        {
+            if(isset($row['Response Time'])) 
+            {
+                $resp[$key]  = $row['Response Time'];
+            }
         }
         // Sort the items with responsetime descending, throughput ascending
         // Add $items as the last parameter, to sort by the common key
@@ -305,7 +323,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
         return $items;
     }
 
-    public function check_array_keys($obj, $status, $reporting) {
+    public function check_array_keys($obj, $status, $reporting) 
+    {
         $arr_components = array("response_time" => "Response Time",
                                 "throughput" => "Throughput",
                                 "error_rate" => "Error Rate",
@@ -322,59 +341,65 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                          "Number of Instance" => "--",
                          "Health Status" => $status);
 
-        if((!empty($reporting) OR $reporting != 'Not Reporting') AND isset($obj['application_summary'])) {
+        if((!empty($reporting) OR $reporting != 'Not Reporting') AND isset($obj['application_summary'])) 
+        {
             $sum_obj = $obj['application_summary'];
-            foreach ($arr_components as $key => $val) {
-              if (array_key_exists($key, $sum_obj)) {
-                   $items[$val] = $sum_obj[$key];
-              }
+            foreach ($arr_components as $key => $val) 
+            {
+                if (array_key_exists($key, $sum_obj)) 
+                {
+                    $items[$val] = $sum_obj[$key];
+                }
             }
         }
 
         return $items;
     }
 
-    public function fetch_newrelic_data($api_key, $env_id) {
-      $url =  'https://api.newrelic.com/v2/applications.json';
+    public function fetch_newrelic_data($api_key, $env_id) 
+    {
+        $url =  'https://api.newrelic.com/v2/applications.json';
+        $result = $this->CallAPI('GET', $url, $api_key, $data = false);
+        $obj_result = json_decode($result, true);
 
-      $result = $this->CallAPI('GET', $url, $api_key, $data = false);
-      $obj_result = json_decode($result, true);
+        if(isset($obj_result['applications'])) 
+        {
+            foreach($obj_result['applications'] as $key => $val) {
+                $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
+                $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
+                $item_obj = json_decode($myresult, true);
 
-      if(isset($obj_result['applications'])) {
-          foreach($obj_result['applications'] as $key => $val) {
-
-              $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
-
-              $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
-              $item_obj = json_decode($myresult, true);
-
-              if(strstr($item_obj['application']['name'], $env_id)) {
-                   $obj = $item_obj['application'];
-                   $status = $this->HealthStatus($obj['health_status']);
-                   $reporting = $this->HealthStatus($obj['reporting']);
-                   return $this->check_array_keys($obj, $status, $reporting);
-              }
-          }
-      }
-      return false;
+                if(strstr($item_obj['application']['name'], $env_id)) {
+                    $obj = $item_obj['application'];
+                    $status = $this->HealthStatus($obj['health_status']);
+                    $reporting = $this->HealthStatus($obj['reporting']);
+                    return $this->check_array_keys($obj, $status, $reporting);
+                }
+            }
+        }
+        return false;
     }
 
-    public function fetch_newrelic_info($api_key, $nr_id, $env_id) {
-      $url =  'https://api.newrelic.com/v2/applications.json';
+    public function fetch_newrelic_info($api_key, $nr_id, $env_id) 
+    {
+        $url =  'https://api.newrelic.com/v2/applications.json';
 
-      $result = $this->CallAPI('GET', $url, $api_key, $data = false);
-      $obj_result = json_decode($result, true);
+        $result = $this->CallAPI('GET', $url, $api_key, $data = false);
+        $obj_result = json_decode($result, true);
 
-      if(isset($obj_result['applications'])) {
-          foreach($obj_result['applications'] as $key => $val) {
-          $isMatched = strstr($val['name'], '(' . $env_id . ')');
-              if($isMatched != ""){
-                  $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
-                  $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
-                  return json_encode(array_merge(json_decode($myresult, true), array("api_key" => $api_key, "nr_id" => $nr_id)));
-              }
-          }
-      }
-      return false;
+        if(isset($obj_result['applications'])) 
+        {
+            foreach($obj_result['applications'] as $key => $val) 
+            {
+                $isMatched = strstr($val['name'], '(' . $env_id . ')');
+                    if($isMatched != "")
+                    {
+                        $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
+                        $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
+                        return json_encode(array_merge(json_decode($myresult, true), array("api_key" => $api_key, "nr_id" => $nr_id)));
+                    }
+                }
+        }
+        return false;
     }
 }
