@@ -237,7 +237,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
           $newrelic = $env->getBindings()->getByType('newrelic');
 
           $nr_data = array_pop($newrelic);
-
           if(!empty($nr_data)) {
               $api_key = $nr_data->get('api_key');
               $nr_id = $nr_data->get('account_id');
@@ -368,9 +367,12 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
       if(isset($obj_result['applications'])) {
           foreach($obj_result['applications'] as $key => $val) {
-              $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
-              $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
-              return json_encode(array_merge(json_decode($myresult, true), array("api_key" => $api_key, "nr_id" => $nr_id)));
+          $isMatched = strstr($val['name'], '(' . $env_id . ')');
+              if($isMatched != ""){
+                  $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
+                  $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
+                  return json_encode(array_merge(json_decode($myresult, true), array("api_key" => $api_key, "nr_id" => $nr_id)));
+              }
           }
       }
       return false;
