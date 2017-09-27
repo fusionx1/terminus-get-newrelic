@@ -41,7 +41,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     public function org($org_id, $plan = null, 
         $options = ['overview' => false, 
                 'all' => false, 
-                'team' => false, 
+                'team' => false,
+                'exclude-free-plan' => false, 
                 'owner' => null]
     ) {
         $climate = new CLImate;
@@ -53,6 +54,10 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
             $elite = array();
             $preloader = 'Loading.';
             $counter = 0;
+
+        
+            date_default_timezone_set("Asia/Manila");
+            $ds = date("h:i:sa");
 
             $this->sites()->fetch(
                 [
@@ -68,7 +73,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 $this->sites->filterByOwner($owner);
             }
 
-            $sites = $this->sites->serialize();
+            
+            $sites = $this->sites->filter(function ($site) {return $site->get('service_level') != 'free';})->serialize();
+        
             if (empty($sites)) {
                 $this->log()->notice('You have no sites.');
             }
@@ -76,7 +83,11 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
             $count = count($sites);
             $str_format = "";
             $progress = $climate->progress()->total($count);
-
+            $exclude_free = 'noplan';
+            if($options['exclude-free-plan']) {
+                $exclude_free = 'free';
+            }
+           
             foreach ($sites as $site) 
             {
                 $service_level = $site['service_level'];
@@ -84,7 +95,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
                     foreach ($environments as $environment) 
                     {
-                        if ($environment['id'] == 'dev' AND !$options['overview'] ) { // #1 start
+                        if ($environment['id'] == 'dev' AND !$options['overview'] ) { 
                             $site_env = $site['name'] . '.' . $environment['id'];
                             list(, $env) = $this->getSiteEnv($site_env);
                             $env_id = $env->getName();
@@ -113,30 +124,31 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
                                     switch ($service_level) 
                                     {
-                                case "free":
-                                    $free[] = $data;
-                                    break;
+                                    case "free":
+                                        $free[] = $data;
+                                        break;
 
-                                case "basic":
-                                    $basic[] = $data;
-                                    break;
+                                    case "basic":
+                                        $basic[] = $data;
+                                        break;
 
-                                case "pro":
-                                    $pro[] = $data;
-                                    break;
+                                    case "pro":
+                                        $pro[] = $data;
+                                        break;
 
-                                case "business":
-                                    $business[] = $data;
-                                    break;
+                                    case "business":
+                                        $business[] = $data;
+                                        break;
 
-                                case "elite":
-                                    $elite[] = $data;
-                                    break;
+                                    case "elite":
+                                    case "elite_starter":
+                                        $elite[] = $data;
+                                        break;
                                     }
                             }
                         }
-                                                                                        // #1 end
-                        if ($environment['id'] == 'live' AND $options['overview']) { // #2 start
+                                                                                        
+                        if ($environment['id'] == 'live' AND $options['overview']) { 
                             $site_env = $site['name'] . '.' . $environment['id'];
                             list(, $env) = $this->getSiteEnv($site_env);
                             $env_id = $env->getName();
@@ -149,10 +161,11 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                     $items[] = $pop;
                                 }
                             }
-
-                        }                                                                // #2 end
+                        }                                                                
                     }
+                
                 }
+                
                 $progress->current($counter);
             }
 
@@ -182,7 +195,9 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 $items = $this->multi_sort($items);
                 $climate->table($items);
             }
-
+            
+            $de=date("h:i:sa");
+            echo  'Perf Audit Completed in: from '. $ds .' to ' . $de;
 
         }
     }
