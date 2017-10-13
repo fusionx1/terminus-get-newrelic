@@ -114,7 +114,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                     "Service level" => $site['service_level'],
                                     "Framework"  => $site['framework'],
                                     "Site created" => $site['created'],
-                                    "PHP version" => $site['php_version'],
                                     "Newrelic" => $nr_status,
                                     "Dashboard URL" => $dash_link);
 
