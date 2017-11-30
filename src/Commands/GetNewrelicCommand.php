@@ -114,6 +114,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                     "Service level" => $site['service_level'],
                                     "Framework"  => $site['framework'],
                                     "Site created" => $site['created'],
+                                    "PHP version" => $site['php_version'],
                                     "Newrelic" => $nr_status,
                                     "Dashboard URL" => $dash_link);
 
@@ -387,11 +388,11 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
         $result = $this->CallAPI('GET', $url, $api_key, $data = false);
         $obj_result = json_decode($result, true);
-
+        
         if(isset($obj_result['applications'])) {
             foreach($obj_result['applications'] as $key => $val) 
             {
-                $isMatched = strstr($val['name'], '(' . $env_id . ')');
+                $isMatched = strstr(strtolower($val['name']), '(' . strtolower($env_id) . ')');
                 if($isMatched != "") {
                     $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
                     $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
