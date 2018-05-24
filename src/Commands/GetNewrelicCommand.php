@@ -73,9 +73,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 $this->sites->filterByOwner($owner);
             }
 
-            
             $sites = $this->sites->filter(function ($site) {return $site->get('service_level') != 'free';})->serialize();
-        
+
             if (empty($sites)) {
                 $this->log()->notice('You have no sites.');
             }
@@ -114,7 +113,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                     "Service level" => $site['service_level'],
                                     "Framework"  => $site['framework'],
                                     "Site created" => $site['created'],
-                                    "PHP version" => $site['php_version'],
                                     "Newrelic" => $nr_status,
                                     "Dashboard URL" => $dash_link);
 
@@ -308,6 +306,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HEADER, false);
 
+
         $data = curl_exec($ch);
         curl_close($ch);;
 
@@ -382,14 +381,17 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
         return false;
     }
 
+
     public function fetch_newrelic_info($api_key, $nr_id, $env_id) 
     {
         $url =  'https://api.newrelic.com/v2/applications.json';
-
-        $result = $this->CallAPI('GET', $url, $api_key, $data = false);
+        $count=0;
+        $instance_name = $this->check_json_data($api_key, $nr_id, $env_id);
+        $result = $this->CallAPI('GET', $url . "?filter[name]=" .$instance_name. "+(live)", $api_key, $data = false);
         $obj_result = json_decode($result, true);
-        
         if(isset($obj_result['applications'])) {
+            $count = count($obj_result['applications']);
+            $this->log()->notice($count);
             foreach($obj_result['applications'] as $key => $val) 
             {
                 $isMatched = strstr(strtolower($val['name']), '(' . strtolower($env_id) . ')');
@@ -397,6 +399,26 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                     $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
                     $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
                     return json_encode(array_merge(json_decode($myresult, true), array("api_key" => $api_key, "nr_id" => $nr_id)));
+                }
+            }
+        }
+        
+        return false;
+    }
+
+    public function check_json_data($api_key, $nr_id, $env_id) 
+    {
+        $url =  'https://api.newrelic.com/v2/applications.json';
+        $result = $this->CallAPI('GET', $url, $api_key, $data = false);
+        $obj_result = json_decode($result, true);
+            
+        if(isset($obj_result['applications'])) {
+            $count = count($obj_result['applications']);
+            foreach($obj_result['applications'] as $key => $val) 
+            {
+                $isMatched = stristr(strtolower($val['name']), "(", true );
+                if($isMatched != "") {
+                    return str_replace(' ', '', $isMatched);
                 }
             }
         }
