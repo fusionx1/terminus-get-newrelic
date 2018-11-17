@@ -251,13 +251,21 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
         $siteInfo = $site->serialize();
         $site_id = $siteInfo['id'];
+        $site_name = $siteInfo['name'];
         $newrelic = $env->getBindings()->getByType('newrelic');
 
         $nr_data = array_pop($newrelic);
         if(!empty($nr_data)) {
             $api_key = $nr_data->get('api_key');
             $nr_id = $nr_data->get('account_id');
-            $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id);
+            
+            $nameIsMatched = stristr(strtolower($site_name), "-", true );
+            if($nameIsMatched != "") {
+                // If sitename has "-" replace it with "+"
+                $site_name =  str_replace('-', '+', $site_name);
+            }
+             
+            $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id, $site_name);
             if(isset($pop)) {
                 $items[] = $pop;
                 return $items;
@@ -382,12 +390,13 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     }
 
 
-    public function fetch_newrelic_info($api_key, $nr_id, $env_id) 
+    public function fetch_newrelic_info($api_key, $nr_id, $env_id, $site_name) 
     {
+       
         $url =  'https://api.newrelic.com/v2/applications.json';
         $count=0;
-        $instance_name = $this->check_json_data($api_key, $nr_id, $env_id);
-        $result = $this->CallAPI('GET', $url . "?filter[name]=" .$instance_name. "+(live)", $api_key, $data = false);
+
+        $result = $this->CallAPI('GET', $url . "?filter[name]=". $site_name ."+(live)", $api_key, $data = false);
         $obj_result = json_decode($result, true);
         if(isset($obj_result['applications'])) {
             $count = count($obj_result['applications']);
@@ -402,26 +411,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 }
             }
         }
-        
         return false;
     }
 
-    public function check_json_data($api_key, $nr_id, $env_id) 
-    {
-        $url =  'https://api.newrelic.com/v2/applications.json';
-        $result = $this->CallAPI('GET', $url, $api_key, $data = false);
-        $obj_result = json_decode($result, true);
-            
-        if(isset($obj_result['applications'])) {
-            $count = count($obj_result['applications']);
-            foreach($obj_result['applications'] as $key => $val) 
-            {
-                $isMatched = stristr(strtolower($val['name']), "(", true );
-                if($isMatched != "") {
-                    return str_replace(' ', '', $isMatched);
-                }
-            }
-        }
-        return false;
-    }
 }
