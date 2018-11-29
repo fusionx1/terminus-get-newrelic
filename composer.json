@@ -5,11 +5,6 @@
     "autoload": {
         "psr-4": { "Pantheon\\TerminusGetNewrelic\\": "src" }
     },
-    "extra": {
-        "terminus": {
-            "compatible-version": "1.9"
-        }
-    },
     "require-dev": {
         "league/climate": "^3.2"
     }, 
