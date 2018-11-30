@@ -242,7 +242,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     * @command newrelic-data:info
     */
     public function info($site_env_id, $plan = null, 
-        $options = ['all' => false, 'overview' => false]
+        $options = ['custom_name' => false]
     ) {
 
         // Get env_id and site_id.
@@ -251,21 +251,15 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
         $siteInfo = $site->serialize();
         $site_id = $siteInfo['id'];
-        $site_name = $siteInfo['name'];
         $newrelic = $env->getBindings()->getByType('newrelic');
 
         $nr_data = array_pop($newrelic);
         if(!empty($nr_data)) {
             $api_key = $nr_data->get('api_key');
             $nr_id = $nr_data->get('account_id');
-            
-            $nameIsMatched = stristr(strtolower($site_name), "-", true );
-            if($nameIsMatched != "") {
-                // If sitename has "-" replace it with "+"
-                $site_name =  str_replace('-', '+', $site_name);
-            }
+            #echo $site_name. "<<<<";
              
-            $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id, $site_name);
+            $pop = $this->fetch_newrelic_info($api_key, $nr_id, $env_id);
             if(isset($pop)) {
                 $items[] = $pop;
                 return $items;
@@ -390,13 +384,13 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     }
 
 
-    public function fetch_newrelic_info($api_key, $nr_id, $env_id, $site_name) 
+    public function fetch_newrelic_info($api_key, $nr_id, $env_id) 
     {
        
         $url =  'https://api.newrelic.com/v2/applications.json';
         $count=0;
 
-        $result = $this->CallAPI('GET', $url . "?filter[name]=". $site_name ."+(live)", $api_key, $data = false);
+        $result = $this->CallAPI('GET', $url . "?filter[name]=+(live)", $api_key, $data = false);
         $obj_result = json_decode($result, true);
         if(isset($obj_result['applications'])) {
             $count = count($obj_result['applications']);
