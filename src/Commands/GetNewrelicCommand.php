@@ -52,6 +52,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
             $free = array();
             $business = array();
             $elite = array();
+            $performance = array();
             $preloader = 'Loading.';
             $counter = 0;
 
@@ -127,19 +128,32 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                         break;
 
                                     case "basic":
+                                    case "basic_small":
                                         $basic[] = $data;
                                         break;
 
                                     case "pro":
                                         $pro[] = $data;
                                         break;
-
+                                    
                                     case "business":
+                                    case "business_xl":
+                                    
                                         $business[] = $data;
+                                        break;
+
+                                    case "performance_small":
+                                    case "performance_medium":
+                                    case "performance_large":
+                                    case "performance_xlarge":
+                                        $performance[] = $data;
                                         break;
 
                                     case "elite":
                                     case "elite_starter":
+                                    case "elite_plus":
+                                    case "elite_super":
+                                    case "elite_max":
                                         $elite[] = $data;
                                         break;
                                     }
@@ -152,6 +166,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                             $env_id = $env->getName();
                             $newrelic = $env->getBindings()->getByType('newrelic');
                             $nr_data = array_pop($newrelic);
+                            //print_r($nr_data);
+                            
                             if(!empty($nr_data) OR $options['all']) {
                                 $api_key = $nr_data->get('api_key');
                                 $pop = $this->fetch_newrelic_data($api_key, $env_id);
@@ -169,21 +185,16 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
 
             if (empty($items) AND !isset($items)) {
-                if (!empty($free)) {
-                    $climate->table($free); 
+
+                $site_plans = array('free', 'basic', 'business', 'performance', 'elite');
+                
+                foreach($site_plans as $plan)
+                {
+                    if (!empty($$plan)) {
+                        $climate->table($$plan); 
+                    }
                 }
-                if (!empty($basic)) {
-                    $climate->table($basic); 
-                }
-                if (!empty($pro)) {
-                    $climate->table($pro); 
-                }
-                if (!empty($business)) {
-                    $climate->table($business); 
-                }
-                if (!empty($elite)) {
-                    $climate->table($elite); 
-                }
+                
 
                 echo "Sites with No New Relic: " . substr($str_format, 0, -1);
                 echo "\n";
@@ -319,8 +330,8 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
     {
         foreach ($items as $key => $row) 
         {
-            if(isset($row['Response Time'])) {
-                $resp[$key]  = $row['Response Time'];
+            if(isset($row['Appserver Response Time'])) {
+                $resp[$key]  = $row['Appserver Response Time'];
             }
         }
         // Sort the items with responsetime descending, throughput ascending
@@ -331,28 +342,49 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
     public function check_array_keys($obj, $status, $reporting) 
     {
-        $arr_components = array("response_time" => "Response Time",
-                                "throughput" => "Throughput",
+        $arr_components = array("response_time" => "Appserver Response Time",
+                                "throughput" => "Appserver Throughput",
                                 "error_rate" => "Error Rate",
                                 "apdex_target" => "Apdex Target",
+                                "browser_loadtime" => "Browser Load Time",
+                                "avg_browser_loadtime" => "Avg Page Load Time",
                                 "host_count" => "Number of Hosts",
                                 "instance_count" => "Number of Instance");
 
         $items = array( "Name" => $obj['name'],
-                         "Response Time" => "--",
-                         "Throughput" => "--",
+                        
+                         "Appserver Response Time" => "--",
+                         "Appserver Throughput" => "--",
                          "Error Rate" => "--",
                          "Apdex Target" => "--",
+                         "Browser Load Time" => "--",
+                         "Avg Page Load Time" => "--",
                          "Number of Hosts" => "--",
                          "Number of Instance" => "--",
                          "Health Status" => $status);
 
         if((!empty($reporting) OR $reporting != 'Not Reporting') AND isset($obj['application_summary'])) {
             $sum_obj = $obj['application_summary'];
+            $end_user_obj = $obj['end_user_summary'];
             foreach ($arr_components as $key => $val) 
             {
                 if (array_key_exists($key, $sum_obj)) {
+                    if($key == 'response_time'){
+                        $val = 'Appserver Response Time';
+                    }
+                    if($key == 'throughput'){
+                        $val = 'Appserver Throughput';
+                    }
                     $items[$val] = $sum_obj[$key];
+                }
+                if (array_key_exists($key, $end_user_obj)) {
+                    if($key == 'response_time'){
+                        $val = 'Browser Load Time';
+                    }
+                    if($key == 'throughput'){
+                        $val = 'Avg Page Load Time';
+                    }
+                    $items[$val] = $end_user_obj[$key];
                 }
             }
         }
@@ -371,7 +403,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                 $url =  "https://api.newrelic.com/v2/applications/" . $val['id'] . ".json";
                 $myresult = $this->CallAPI('GET', $url, $api_key, $data = false);
                 $item_obj = json_decode($myresult, true);
-
                 if(strstr($item_obj['application']['name'], $env_id)) {
                     $obj = $item_obj['application'];
                     $status = $this->HealthStatus($obj['health_status']);
