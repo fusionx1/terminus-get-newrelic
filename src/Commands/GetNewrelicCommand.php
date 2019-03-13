@@ -90,7 +90,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
            
             foreach ($sites as $site) 
             {
-                $service_level = $site['service_level'];
                 $counter++;
                 if ($environments = $this->getSite($site['name'])->getEnvironments()->serialize()) {
                     foreach ($environments as $environment) 
@@ -109,7 +108,7 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                                 $appserver_data = array_pop($appserver);
                                 $dash_link = empty($appserver_data) ? "--" : $dash_path . $appserver_data->get('site');
 
-
+                                $service_level = $site['service_level'];
                                 $data = array( "Site" => $site['name'],
                                     "Service level" => $site['service_level'],
                                     "Framework"  => $site['framework'],
@@ -365,7 +364,6 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
 
         if((!empty($reporting) OR $reporting != 'Not Reporting') AND isset($obj['application_summary'])) {
             $sum_obj = $obj['application_summary'];
-            $end_user_obj = $obj['end_user_summary'];
             foreach ($arr_components as $key => $val) 
             {
                 if (array_key_exists($key, $sum_obj)) {
@@ -377,15 +375,19 @@ class GetNewrelicCommand extends TerminusCommand implements SiteAwareInterface
                     }
                     $items[$val] = $sum_obj[$key];
                 }
-                if (array_key_exists($key, $end_user_obj)) {
-                    if($key == 'response_time'){
-                        $val = 'Browser Load Time';
+                if(isset($obj['end_user_summary'])){
+                    $end_user_obj = $obj['end_user_summary'];
+                    if (array_key_exists($key, $end_user_obj)) {
+                        if($key == 'response_time'){
+                            $val = 'Browser Load Time';
+                        }
+                        if($key == 'throughput'){
+                            $val = 'Avg Page Load Time';
+                        }
+                        $items[$val] = $end_user_obj[$key];
                     }
-                    if($key == 'throughput'){
-                        $val = 'Avg Page Load Time';
-                    }
-                    $items[$val] = $end_user_obj[$key];
                 }
+                
             }
         }
 
